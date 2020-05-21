@@ -1,6 +1,9 @@
+#include "windows.h"
+#include <cstdio> //printf
+
 #include "game.h"
 #include "surface.h"
-#include <cstdio> //printf
+#include "tank.h"
 
 namespace Tmpl8
 {
@@ -22,16 +25,12 @@ namespace Tmpl8
 		printf("goodbye");
 	}
 
-	Sprite noise(new Surface("assets/noise.png"), 1);
 	// -----------------------------------------------------------
 	// Main application tick function
 	// -----------------------------------------------------------
 	
-	int dir = 1; //right for even rows, left for odd
-	int index = 399;
-	
-	void Game::Tick(float deltaTime)
-	{
-		screen->Box(10, 10, 100, 100, 0x00ff00);
+	void Game::Tick(float deltaTime) {
+		screen->Clear(0);
+		
 	}
 };
