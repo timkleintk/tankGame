@@ -1,18 +1,26 @@
+#pragma once
 //#include "surface.h" // Pixel
+//#include "surface.h"
+
+
+namespace Tmpl8 {
 
 class Surface;
 
-class Tank
-{
-public:
-	Tank();
-	~Tank();
+class Tank {
+	public:
+		Tank();
+		~Tank();
 
-	void draw(Surface* screen);
+		void draw(Surface* screen);
+		void move(float dt);
 
-	int x, y, w, h;
-	float r;
-	//Pixel* c;
-private:
+		int w, h;
+		float x, y, r, v;
+		//Pixel* c;
 
-};
+	private:
+		
+
+	};
+}

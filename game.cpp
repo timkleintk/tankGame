@@ -1,3 +1,4 @@
+#define WIN32_LEAN_AND_MEAN
 #include "windows.h"
 #include <cstdio> //printf
 
@@ -12,9 +13,15 @@ namespace Tmpl8
 	// Initialize the application
 	// -----------------------------------------------------------
 	
+	Tank* player;
+	float life = 0.0f;
+
 	void Game::Init()
 	{ 
 		printf("init");
+
+
+		player = new Tank();
 	}
 	
 	// -----------------------------------------------------------
@@ -31,6 +38,11 @@ namespace Tmpl8
 	
 	void Game::Tick(float deltaTime) {
 		screen->Clear(0);
+		player->move(deltaTime);
+		player->draw(screen);
+		life += deltaTime;
+		printf("dt: %f\n", life);
+
 		
 	}
 };
