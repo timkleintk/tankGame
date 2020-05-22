@@ -101,7 +101,6 @@ namespace Tmpl8
 	 }
 
 	void Tank::move(float dt) {
-		//dt = 1.0f;
 
 		// get button inputs
 		if (GetAsyncKeyState(Controls::right)) r += rotationSpeed;
