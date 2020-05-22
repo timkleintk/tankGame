@@ -19,6 +19,7 @@
       <Filter>template code</Filter>
     </ClInclude>
     <ClInclude Include="tank.h" />
+    <ClInclude Include="Controls.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="template code">
