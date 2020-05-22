@@ -13,10 +13,14 @@ class Tank {
 		~Tank();
 
 		void draw(Surface* screen);
+		void getVerticis(float* arr);
 		void move(float dt);
 
+		void rotateTurret(int mx, int my);
+		void rotateTurret(float nr);
+
 		int w, h;
-		float x, y, r, v;
+		float x, y, r, tr, v;
 		//Pixel* c;
 
 	private:

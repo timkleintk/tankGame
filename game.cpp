@@ -39,10 +39,10 @@ namespace Tmpl8
 	void Game::Tick(float deltaTime) {
 		screen->Clear(0);
 		player->move(deltaTime);
+		player->rotateTurret(mouseX, mouseY);
+		//player->rotateTurret(100, 100);
 		player->draw(screen);
-		life += deltaTime;
-		printf("dt: %f\n", life);
-
-		
+		//life += deltaTime;
+		//printf("dt: %f\n", life);		
 	}
 };
