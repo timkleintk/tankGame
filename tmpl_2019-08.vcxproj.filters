@@ -1,29 +1,51 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="game.cpp" />
     <ClCompile Include="surface.cpp">
       <Filter>template code</Filter>
     </ClCompile>
     <ClCompile Include="template.cpp">
       <Filter>template code</Filter>
     </ClCompile>
-    <ClCompile Include="tank.cpp" />
+    <ClCompile Include="QuadTree.cpp">
+      <Filter>cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="tank.cpp">
+      <Filter>cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="game.cpp">
+      <Filter>cpp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="game.h" />
     <ClInclude Include="surface.h">
       <Filter>template code</Filter>
     </ClInclude>
     <ClInclude Include="template.h">
       <Filter>template code</Filter>
     </ClInclude>
-    <ClInclude Include="tank.h" />
-    <ClInclude Include="Controls.h" />
+    <ClInclude Include="game.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="QuadTree.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="tank.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls.h">
+      <Filter>headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="template code">
       <UniqueIdentifier>{bf32dd6e-4be7-4889-8ac6-49e7ee163c40}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="headers">
+      <UniqueIdentifier>{8623395b-b01b-48ca-9a94-f960028df907}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="cpp">
+      <UniqueIdentifier>{3308f42a-d898-49d2-8456-2ee8345f067c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -31,5 +53,8 @@
       <Filter>template code</Filter>
     </Text>
     <Text Include="config.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

@@ -7,8 +7,18 @@
 #include "surface.h"
 #include "tank.h"
 
+#include "socketCode/sio_client.h" // does this work?
+#include "socketCode/sio_message.h"
+#include "socketCode/sio_socket.h"
+
+#include "socketCode/internal/sio_client_impl.h"
+#include "socketCode/internal/sio_packet.h"
+
 namespace Tmpl8
 {
+	
+	sio::client h;
+	h.connect("http://127.0.0.1:3000");
 
 	// -----------------------------------------------------------
 	// Initialize the application
