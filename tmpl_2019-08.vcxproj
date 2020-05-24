@@ -222,19 +222,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="game.cpp" />
-    <ClCompile Include="QuadTree.cpp" />
-    <ClCompile Include="surface.cpp" />
-    <ClCompile Include="tank.cpp" />
-    <ClCompile Include="template.cpp" />
+    <ClCompile Include="src\game.cpp" />
+    <ClCompile Include="src\QuadTree.cpp" />
+    <ClCompile Include="src\surface.cpp" />
+    <ClCompile Include="src\tank.cpp" />
+    <ClCompile Include="src\template.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="game.h" />
-    <ClInclude Include="Controls.h" />
-    <ClInclude Include="QuadTree.h" />
-    <ClInclude Include="surface.h" />
-    <ClInclude Include="tank.h" />
-    <ClInclude Include="template.h" />
+    <ClInclude Include="src\Controls.h" />
+    <ClInclude Include="src\game.h" />
+    <ClInclude Include="src\network.h" />
+    <ClInclude Include="src\QuadTree.h" />
+    <ClInclude Include="src\surface.h" />
+    <ClInclude Include="src\tank.h" />
+    <ClInclude Include="src\template.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="config.txt" />

@@ -1,39 +1,36 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="surface.cpp">
+    <ClCompile Include="src\game.cpp" />
+    <ClCompile Include="src\QuadTree.cpp" />
+    <ClCompile Include="src\tank.cpp" />
+    <ClCompile Include="src\surface.cpp">
       <Filter>template code</Filter>
     </ClCompile>
-    <ClCompile Include="template.cpp">
+    <ClCompile Include="src\template.cpp">
       <Filter>template code</Filter>
-    </ClCompile>
-    <ClCompile Include="QuadTree.cpp">
-      <Filter>cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="tank.cpp">
-      <Filter>cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="game.cpp">
-      <Filter>cpp</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="surface.h">
+    <ClInclude Include="src\Controls.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\game.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\QuadTree.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\tank.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\surface.h">
       <Filter>template code</Filter>
     </ClInclude>
-    <ClInclude Include="template.h">
+    <ClInclude Include="src\template.h">
       <Filter>template code</Filter>
     </ClInclude>
-    <ClInclude Include="game.h">
-      <Filter>headers</Filter>
-    </ClInclude>
-    <ClInclude Include="QuadTree.h">
-      <Filter>headers</Filter>
-    </ClInclude>
-    <ClInclude Include="tank.h">
-      <Filter>headers</Filter>
-    </ClInclude>
-    <ClInclude Include="Controls.h">
+    <ClInclude Include="src\network.h">
       <Filter>headers</Filter>
     </ClInclude>
   </ItemGroup>
@@ -43,9 +40,6 @@
     </Filter>
     <Filter Include="headers">
       <UniqueIdentifier>{8623395b-b01b-48ca-9a94-f960028df907}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="cpp">
-      <UniqueIdentifier>{3308f42a-d898-49d2-8456-2ee8345f067c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

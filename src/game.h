@@ -3,7 +3,7 @@
 namespace Tmpl8 {
 
 class Surface;
-
+class Connection;
 
 class Game {
 	public:
@@ -18,7 +18,11 @@ class Game {
 		void KeyDown(int key); // implementation in game.cpp
 	private:
 		Surface* screen;
-		int mouseX, mouseY;
-};
+		Connection* io;
+		char networkBuffer[1024];
+		int mouseX, mouseY, networkBufferLength;
+};	
+
+void displayBuffer(char* buf, int len); // just a function
 
 }; // namespace Tmpl8
