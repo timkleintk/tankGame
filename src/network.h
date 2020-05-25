@@ -67,9 +67,17 @@ class Connection {
 			}
 		}
 
-		void ping() {
-			char msg[1];
-			send(CPING, msg, 1);
+		int ping() {
+			char msg[5];
+			int sendTime,recvTime;
+			time(&sendTime);
+			insertIntIntoBuffer(sendTime, msg, 1);
+			//int sendTime = currentTime;
+			send(CPING, msg, sizeof(msg));
+			while (recv() < 0) {}
+			time(&recvTime);
+			return (recvTime - sendTime);
+
 			//char msg = (char)0x01;
 			//int sendOk = sendto(sock, &msg, 1, 0, (sockaddr*)&server, sizeof(server));
 			//if (sendOk == SOCKET_ERROR) {

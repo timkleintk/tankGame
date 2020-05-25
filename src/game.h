@@ -21,8 +21,15 @@ class Game {
 		Connection* io;
 		char networkBuffer[1024];
 		int mouseX, mouseY, networkBufferLength;
+		void showPing(int x, int y);
 };	
 
 void displayBuffer(char* buf, int len); // just a function
+void insertIntIntoBuffer(int i, char *buf, int offset);
+void insertIntIntoBuffer(unsigned __int64 i, char *buf, int offset);
+void time(int *i);
+int intFromBuf(char *buf, int offset);
+//void recv();
+
 
 }; // namespace Tmpl8

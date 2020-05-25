@@ -2,6 +2,9 @@
 #include "windows.h"
 #include <cstdio> //printf
 
+//#include <ctime>
+#include <chrono>
+
 #include "game.h"
 #include "network.h"
 #include "Controls.h"
@@ -25,6 +28,9 @@ namespace Tmpl8
 	
 	Player* player;
 	float life = 0.0f;
+	int currentTime;
+	//unsigned __int64 currentTime;
+
 
 	//const int networkBufferLength = 1024;
 
@@ -37,8 +43,8 @@ namespace Tmpl8
 		printf("init\n");
 		networkBufferLength = 1024;
 		io = new Connection((PCSTR)"212.182.134.29", 8009, networkBuffer, sizeof(networkBuffer));
-
-		io->ping();
+		//io->ping();
+		printf("pingTime: %i", io->ping());
 
 		player = new Player();	
 	}
@@ -56,13 +62,32 @@ namespace Tmpl8
 	// -----------------------------------------------------------
 	
 	void Game::Tick(float deltaTime) {
-		if (io->recv() > 0) {
-			displayBuffer(networkBuffer, networkBufferLength);
-		}
+		time(&currentTime);
+		//printf("pingTime: %i", io->ping());
+		
+		printf("pingTime: %i\n", io->ping());
+
+		//char msg[5];
+		//insertIntIntoBuffer(currentTime, msg, 1);
+		//io->send(CPING, msg, sizeof(msg));	
+
+		//if (io->recv() > 0) {
+		//	//displayBuffer(networkBuffer, networkBufferLength);
+		//	if (networkBuffer[0] == CPING) { // received back the cping
+		//		printf("CPING recv\n");
+		//		int serverTime = intFromBuf(networkBuffer, 1);
+		//		printf("server time:  %i\n", serverTime);
+		//		printf("current time: %i\n", currentTime);
+		//		printf("difference:   %i\n\n", currentTime - serverTime);
+		//	}
+		//}
 		screen->Clear(0);
+		//recv();
 		player->move(deltaTime);
 		player->rotateTurret(mouseX, mouseY);
 		player->draw(screen);
+		//showPing(10, 10);
+
 	}
 
 	// -----------------------------------------------------------
@@ -90,6 +115,35 @@ namespace Tmpl8
 			printf("%c",buf[i]);
 		}
 		printf("\n");
-
 	}
+
+	void insertIntIntoBuffer(int i, char* buf, int offset) {
+		for (int x = 0; x < sizeof(int); x++) {
+			buf[offset + x] = (i >> (8 * x)) & 0xff;
+		}
+	}
+	void insertIntIntoBuffer(unsigned __int64 i, char* buf, int offset) {
+		//printf("-%x-", i);
+		for (int x = 0; x < sizeof(int); x++) {
+			buf[offset + x] = (i >> (8 * x)) & 0xff;
+			//printf("-%x- ", buf[offset + x]);
+		}
+		//printf("\n");
+	}
+
+	void time(int *i) {
+		*i = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+	}
+
+	int intFromBuf(char* buf, int offset) {
+		return *(reinterpret_cast<unsigned int*>(&buf[offset]));
+	}
+
+	void Game::showPing(int x, int y) {
+		//int score = 123;
+		char text[10];
+		sprintf(text, "Ping: %d", io->ping());
+		screen->Print(text, x, y, 0xff0000);
+	}
+
 };
