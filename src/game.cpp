@@ -40,11 +40,12 @@ namespace Tmpl8
 
 	void Game::Init()
 	{ 
-		printf("init\n");
+		printf("starting up...\n");
 		networkBufferLength = 1024;
 		io = new Connection((PCSTR)"212.182.134.29", 8009, networkBuffer, sizeof(networkBuffer));
 		//io->ping();
-		printf("pingTime: %i", io->ping());
+		printf("connecting to server...\n");
+		printf("pingTime: %i\n\n", io->ping());
 
 		player = new Player();	
 	}
