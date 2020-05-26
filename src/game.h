@@ -26,8 +26,10 @@ class Game {
 
 void displayBuffer(char* buf, int len); // just a function
 void insertIntIntoBuffer(int i, char *buf, int offset);
-void insertIntIntoBuffer(unsigned __int64 i, char *buf, int offset);
-void time(int *i);
+//void insertIntIntoBuffer(unsigned __int64 i, char *buf, int offset);
+
+void time(int *i); int time();
+
 int intFromBuf(char *buf, int offset);
 //void recv();
 

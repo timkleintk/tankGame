@@ -12,89 +12,149 @@
 #include "tank.h"
 
 
-//enum cBytes {
-//	SPING = (char) 0x00,		// 0 - ping from server
-//	CPING = (char) 0x01,		// 1 - ping from client
-//	SUPDATE = (char) 0x02,	// 2 - update from server
-//	CUPDATE = (char) 0x03	// 3 - update from Client
-//};
-
 namespace Tmpl8
 {
 	
-	// -----------------------------------------------------------
+	// -------------------------------------------------------------
 	// Initialize the application
-	// -----------------------------------------------------------
+	// -------------------------------------------------------------
 	
 	Player* player;
 	float life = 0.0f;
 	int currentTime;
-	//unsigned __int64 currentTime;
+	int lastCping;
+	int ping = -1;
+	int maxPing, minPing;
 
+	int timeOut = 3000;
+	float fps;
+	
 
-	//const int networkBufferLength = 1024;
-
-	// -----------------------------------------------------------
+	// -------------------------------------------------------------
 	// Game init
-	// -----------------------------------------------------------
+	// -------------------------------------------------------------
 
 	void Game::Init()
 	{ 
-		printf("starting up...\n");
+		printf("init\n");
+		player = new Player();	
 		networkBufferLength = 1024;
 		io = new Connection((PCSTR)"212.182.134.29", 8009, networkBuffer, sizeof(networkBuffer));
-		//io->ping();
+
+		// establishing connection to the server -------------------
+
 		printf("connecting to server...\n");
-		printf("pingTime: %i\n\n", io->ping());
+		io->ping();
+		time(&lastCping);
 
-		player = new Player();	
+		int frame = 0;
+		char animation[4] = { "\|/-" };
+		printf("waiting on response of server...\n");
+
+		[&] { // waiting for response
+			while (ping < 0) {
+				while (time() - lastCping < timeOut) {
+
+					if (io->recv() >= 0) {
+						if (networkBuffer[0] == (char)CPING) {
+							ping = minPing = maxPing = time() - intFromBuf(networkBuffer, 1);
+
+							printf("\b\b\b\nRecvd response in %d miliseconds\n", ping);
+							io->ping();
+							return;
+						}
+					}
+				}
+				printf("Timed out! maybe the packet got lost. trying again...\n");
+				io->ping();
+				time(&lastCping);
+			}
+		}();
+		
+		// ---------------------------------------------------------
+
 	}
 
-	// -----------------------------------------------------------
-	// Close down application
-	// -----------------------------------------------------------
-	void Game::Shutdown()
-	{
-		printf("goodbye\n");
-	}
 
-	// -----------------------------------------------------------
+	// -------------------------------------------------------------
 	// Main application tick function
-	// -----------------------------------------------------------
+	// -------------------------------------------------------------
 	
 	void Game::Tick(float deltaTime) {
 		time(&currentTime);
-		//printf("pingTime: %i", io->ping());
-		
-		printf("pingTime: %i\n", io->ping());
 
-		//char msg[5];
-		//insertIntIntoBuffer(currentTime, msg, 1);
-		//io->send(CPING, msg, sizeof(msg));	
 
-		//if (io->recv() > 0) {
-		//	//displayBuffer(networkBuffer, networkBufferLength);
-		//	if (networkBuffer[0] == CPING) { // received back the cping
-		//		printf("CPING recv\n");
-		//		int serverTime = intFromBuf(networkBuffer, 1);
-		//		printf("server time:  %i\n", serverTime);
-		//		printf("current time: %i\n", currentTime);
-		//		printf("difference:   %i\n\n", currentTime - serverTime);
-		//	}
-		//}
+		// networking stuff ----------------------------------------
+
+		if (io->recv() >= 0) { // handeling server recvs
+			switch ((int)networkBuffer[0]) {
+			case CPING:
+				// return of the ping!
+				ping = currentTime - lastCping; // currenttime has just been updated, so it seems fair to use it instead of time()
+				if (ping < minPing) { minPing = ping; }
+				if (ping > maxPing) { maxPing = ping; }
+
+				lastCping = currentTime;
+				//printf("PING! (%d)\n", ping);
+				io->ping();
+				break;
+			case SPING:
+				// return the ping!
+				break;
+			case CUPDATE:
+				// this is not supposed to happen
+				break;
+			case SUPDATE:
+				// update internal game state
+				break;
+			default:
+				// this is not supposed to happen
+				break;
+			}
+		}
+
+		if (currentTime - lastCping > timeOut) {
+			printf("cPing timed out, maybe the packet got lost\n");
+			lastCping = currentTime;
+			io->ping();
+		}
+
+		// ---------------------------------------------------------
+
 		screen->Clear(0);
-		//recv();
+
+
+		// player stuff --------------------------------------------
+
 		player->move(deltaTime);
 		player->rotateTurret(mouseX, mouseY);
 		player->draw(screen);
-		//showPing(10, 10);
+		
+
+		// debugging stuff -----------------------------------------
+
+		fps = 1 / (deltaTime / 1000);
+		char str[32];
+		//sprintf(str, "fps:%.1f", fps);
+		sprintf(str, "fps:%.1f", fps);
+		screen->Print(str, 3, 3, 0xff0000);
+		sprintf(str, "png: %d %d %d", minPing, ping, maxPing);
+		screen->Print(str, 3, 11, 0xffffff);
 
 	}
+
+
+	// -----------------------------------------------------------
+	// exiting
+	// -----------------------------------------------------------
+
+	void Game::Shutdown() { printf("goodbye\n"); }
+
 
 	// -----------------------------------------------------------
 	// other stuff
 	// -----------------------------------------------------------
-
+	
 	void Game::MouseMove(int x, int y) {
 		mouseX += x; mouseY += y;
 		player->aimWithMouse = true;
@@ -123,18 +183,19 @@ namespace Tmpl8
 			buf[offset + x] = (i >> (8 * x)) & 0xff;
 		}
 	}
-	void insertIntIntoBuffer(unsigned __int64 i, char* buf, int offset) {
-		//printf("-%x-", i);
-		for (int x = 0; x < sizeof(int); x++) {
-			buf[offset + x] = (i >> (8 * x)) & 0xff;
-			//printf("-%x- ", buf[offset + x]);
-		}
-		//printf("\n");
-	}
 
-	void time(int *i) {
-		*i = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-	}
+	//void insertIntIntoBuffer(unsigned __int64 i, char* buf, int offset) {
+	//	//printf("-%x-", i);
+	//	for (int x = 0; x < sizeof(int); x++) {
+	//		buf[offset + x] = (i >> (8 * x)) & 0xff;
+	//		//printf("-%x- ", buf[offset + x]);
+	//	}
+	//	//printf("\n");
+	//}
+
+	void time(int *i) {*i = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();}
+
+	int time() {return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();}
 
 	int intFromBuf(char* buf, int offset) {
 		return *(reinterpret_cast<unsigned int*>(&buf[offset]));
@@ -143,7 +204,7 @@ namespace Tmpl8
 	void Game::showPing(int x, int y) {
 		//int score = 123;
 		char text[10];
-		sprintf(text, "Ping: %d", io->ping());
+		//sprintf(text, "Ping: %d", io->ping());
 		screen->Print(text, x, y, 0xff0000);
 	}
 

@@ -25,7 +25,8 @@ class Player : public Tank {
 		void rotateTurret(int mx, int my);
 		bool aimWithMouse;
 
-	private:
+	//private:
+
 };
 
 }
