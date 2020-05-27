@@ -13,8 +13,8 @@ class Tank {
 		void draw(Surface* screen);
 		void getVerticis(float* arr);
 		void move(float dt);
-		void rotateTurret(int mx, int my);
 		void rotateTurret(float nr);
+		void fromBuffer(char* buf);
 
 		int w, h;
 		float x, y, r, tr, v;
@@ -23,7 +23,9 @@ class Tank {
 class Player : public Tank {
 	public:
 		void rotateTurret(int mx, int my);
-		bool aimWithMouse;
+		void toBuffer(char* buf);
+		
+		bool aimWithMouse = true;
 
 	//private:
 

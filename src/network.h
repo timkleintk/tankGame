@@ -7,6 +7,7 @@
 #include <iostream>
 #include <WS2tcpip.h>
 #include <string>
+#include "functions.h"
 // Include the Winsock library (lib) file
 #pragma comment (lib, "ws2_32.lib")
 
@@ -75,7 +76,8 @@ class Connection {
 			char msg[5];
 			int sendTime,recvTime;
 			time(&sendTime);
-			insertIntIntoBuffer(sendTime, msg, 1);
+			//insertIntIntoBuffer(sendTime, msg, 1);
+			insertIntoBuffer <int> (&sendTime, msg, 1);
 			send(CPING, msg, sizeof(msg));
 		}
 

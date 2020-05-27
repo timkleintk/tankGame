@@ -10,7 +10,7 @@
 #include "Controls.h"
 #include "surface.h"
 #include "tank.h"
-
+#include "functions.h"
 
 namespace Tmpl8
 {
@@ -39,7 +39,7 @@ namespace Tmpl8
 		printf("init\n");
 		player = new Player();	
 		networkBufferLength = 1024;
-		io = new Connection((PCSTR)"212.182.134.29", 8009, networkBuffer, sizeof(networkBuffer));
+		io = new Connection((PCSTR)"212.182.134.29", 8009, recvBuffer, sizeof(recvBuffer));
 
 		// establishing connection to the server -------------------
 
@@ -56,8 +56,9 @@ namespace Tmpl8
 				while (time() - lastCping < timeOut) {
 
 					if (io->recv() >= 0) {
-						if (networkBuffer[0] == (char)CPING) {
-							ping = minPing = maxPing = time() - intFromBuf(networkBuffer, 1);
+						if (recvBuffer[0] == (char)CPING) {
+							//ping = minPing = maxPing = time() - intFromBuf(networkBuffer, 1);
+							ping = minPing = maxPing = time() - getFromBuffer <int> (recvBuffer, 1);
 
 							printf("\b\b\b\nRecvd response in %d miliseconds\n", ping);
 							io->ping();
@@ -87,7 +88,7 @@ namespace Tmpl8
 		// networking stuff ----------------------------------------
 
 		if (io->recv() >= 0) { // handeling server recvs
-			switch ((int)networkBuffer[0]) {
+			switch ((int)recvBuffer[0]) {
 			case CPING:
 				// return of the ping!
 				ping = currentTime - lastCping; // currenttime has just been updated, so it seems fair to use it instead of time()
@@ -130,6 +131,8 @@ namespace Tmpl8
 		player->rotateTurret(mouseX, mouseY);
 		player->draw(screen);
 		
+		player->toBuffer(sendBuffer);
+		io->send(CUPDATE, sendBuffer, sizeof(sendBuffer));
 
 		// debugging stuff -----------------------------------------
 
@@ -164,12 +167,16 @@ namespace Tmpl8
 		//printf("key pressed: %i\n", key);
 		if (GetAsyncKeyState(Controls::tLeft) || GetAsyncKeyState(Controls::tRight)) player->aimWithMouse = false; // nts ugh
 		if (key == 44) { // spacebar
-			displayBuffer(networkBuffer, networkBufferLength);
+			displayBuffer(recvBuffer, networkBufferLength);
 			char msg[6] = "1test";
 			io->send(CUPDATE, msg, sizeof(msg)); // ping the server
 		}
 	}
 	
+	// -------------------------------------------------------------
+	// functions
+	// -------------------------------------------------------------
+
 	void displayBuffer(char* buf, int len) {
 		printf("buffer:\n");
 		for (int i = 0; i < len; i++) {
@@ -178,34 +185,19 @@ namespace Tmpl8
 		printf("\n");
 	}
 
-	void insertIntIntoBuffer(int i, char* buf, int offset) {
-		for (int x = 0; x < sizeof(int); x++) {
-			buf[offset + x] = (i >> (8 * x)) & 0xff;
-		}
-	}
-
-	//void insertIntIntoBuffer(unsigned __int64 i, char* buf, int offset) {
-	//	//printf("-%x-", i);
-	//	for (int x = 0; x < sizeof(int); x++) {
-	//		buf[offset + x] = (i >> (8 * x)) & 0xff;
-	//		//printf("-%x- ", buf[offset + x]);
-	//	}
-	//	//printf("\n");
-	//}
-
 	void time(int *i) {*i = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();}
 
 	int time() {return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();}
 
-	int intFromBuf(char* buf, int offset) {
+	/*int intFromBuf(char* buf, int offset) {
 		return *(reinterpret_cast<unsigned int*>(&buf[offset]));
-	}
+	}*/
 
-	void Game::showPing(int x, int y) {
-		//int score = 123;
-		char text[10];
-		//sprintf(text, "Ping: %d", io->ping());
-		screen->Print(text, x, y, 0xff0000);
-	}
+	//void Game::showPing(int x, int y) {
+	//	//int score = 123;
+	//	char text[10];
+	//	//sprintf(text, "Ping: %d", io->ping());
+	//	screen->Print(text, x, y, 0xff0000);
+	//}
 
 };

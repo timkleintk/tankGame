@@ -2,6 +2,7 @@
 #include "tank.h"
 #include "surface.h" // Pixel
 #include "Controls.h" // controls
+#include "functions.h" // mostly buffer stuff
 #include "windows.h"
 #include <stdio.h>
 
@@ -56,7 +57,7 @@ namespace Tmpl8
 
 	}
 
-	 void Tank::getVerticis(float *arr) { // takes a float array and inserts the verticis
+	void Tank::getVerticis(float *arr) { // takes a float array and inserts the verticis
 		 
 			arr[0] = x - w / 2.0f * cosf(r) - h / 2.0f * sinf(r); // linksonder
 			arr[1] = y - w / 2.0f * sinf(r) + h / 2.0f * cosf(r);
@@ -92,16 +93,28 @@ namespace Tmpl8
 		y += sinf(r) * v;
 	}					
 
-	void Tank::rotateTurret(int mx, int my) {
+	/*void Tank::rotateTurret(int mx, int my) {
 		tr = atan2f(my - y, mx - x);
+	}
+	*/
+	void Tank::rotateTurret(float nr) {
+		tr = nr;
 	}
 
 	void Player::rotateTurret(int mx, int my) {
 		if (aimWithMouse) tr = atan2f(my - y, mx - x);
 	}
 
-	void Tank::rotateTurret(float nr) {
-		tr = nr;
+	void Player::toBuffer(char* buf) {
+		insertIntoBuffer <float> (&x, buf, 1);
+		insertIntoBuffer <float> (&y, buf, 5);
+		insertIntoBuffer <float> (&r, buf, 9);
+		insertIntoBuffer <float> (&v, buf, 13);
+		insertIntoBuffer <float> (&tr, buf, 17);
+		//insertIntoBuffer <float>(bx, buf, 21);
+		//insertIntoBuffer <float>(by, buf, 25);
+		//insertIntoBuffer <float>(br, buf, 29);
 	}
+
 						  
 }

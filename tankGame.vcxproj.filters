@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="src\game.cpp" />
+    <ClCompile Include="src\QuadTree.cpp" />
+    <ClCompile Include="src\template.cpp" />
+    <ClCompile Include="src\surface.cpp">
+      <Filter>Tmpl8</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tank.cpp">
+      <Filter>Tmpl8</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\surface.h">
+      <Filter>Tmpl8</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Controls.h">
+      <Filter>h</Filter>
+    </ClInclude>
+    <ClInclude Include="src\game.h">
+      <Filter>h</Filter>
+    </ClInclude>
+    <ClInclude Include="src\network.h">
+      <Filter>h</Filter>
+    </ClInclude>
+    <ClInclude Include="src\QuadTree.h">
+      <Filter>h</Filter>
+    </ClInclude>
+    <ClInclude Include="src\template.h">
+      <Filter>Tmpl8</Filter>
+    </ClInclude>
+    <ClInclude Include="src\tank.h">
+      <Filter>h</Filter>
+    </ClInclude>
+    <ClInclude Include="src\functions.h">
+      <Filter>h</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="config.txt" />
+    <Text Include="_readme.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Tmpl8">
+      <UniqueIdentifier>{ed514d9c-d22a-4070-aeb5-9d33fa8df0e7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="h">
+      <UniqueIdentifier>{535216e8-1b42-4b53-976e-9bf151566cea}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
