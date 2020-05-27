@@ -1,5 +1,9 @@
 #pragma once
 
+#ifndef WIN32_LEAN_AND_MEAN // compensating for gayness of winsock
+#define WIN32_LEAN_AND_MEAN
+#endif
+
 #include <iostream>
 #include <WS2tcpip.h>
 #include <string>
