@@ -3,11 +3,11 @@
   <ItemGroup>
     <ClCompile Include="src\game.cpp" />
     <ClCompile Include="src\QuadTree.cpp" />
-    <ClCompile Include="src\template.cpp" />
     <ClCompile Include="src\surface.cpp">
       <Filter>Tmpl8</Filter>
     </ClCompile>
-    <ClCompile Include="src\tank.cpp">
+    <ClCompile Include="src\tank.cpp" />
+    <ClCompile Include="src\template.cpp">
       <Filter>Tmpl8</Filter>
     </ClCompile>
   </ItemGroup>

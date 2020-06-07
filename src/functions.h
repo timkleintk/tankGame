@@ -4,6 +4,7 @@ namespace Tmpl8
 {
 
 void displayBuffer(char* buf, int len); // just a function
+//void displayBuffers(Pixel* mem);
 
 template <typename type>
 void insertIntoBuffer(type* t, char* buf, int offset) {
@@ -15,6 +16,6 @@ type getFromBuffer(char* buf, int offset) {
 	return *(reinterpret_cast<type*>(&buf[offset]));
 }
 
-void time(int* i); int time();
+void time( int* i);  int time();
 
 }

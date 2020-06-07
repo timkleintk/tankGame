@@ -16,19 +16,23 @@ namespace Tmpl8
 {
 	
 	// -------------------------------------------------------------
-	// Initialize the application
+	// Declare variables
 	// -------------------------------------------------------------
 	
 	Player* player;
+	Tank* players[8];
+	INT8 connected[8] = { 0,0,0,0,0,0,0,0 }; // nts look at type
+
 	float life = 0.0f;
 	int currentTime;
-	int lastCping;
+	int lastCping, lastSUpdate;
 	int ping = -1;
 	int maxPing, minPing;
 
 	int timeOut = 3000;
 	float fps;
 	
+	int playerBufferOffset = 0; // nts bad name -_-
 
 	// -------------------------------------------------------------
 	// Game init
@@ -37,43 +41,19 @@ namespace Tmpl8
 	void Game::Init()
 	{ 
 		printf("init\n");
-		player = new Player();	
+		//player = new Player(&playerBuffer[0]);	
+		player = new Player(playerBuffer);
+		//players[0] = new Tank(playerBuffer);
 		networkBufferLength = 1024;
 		io = new Connection((PCSTR)"212.182.134.29", 8009, recvBuffer, sizeof(recvBuffer));
+		time(&lastSUpdate); // for if currentTime < 0;
+
 
 		// establishing connection to the server -------------------
-
 		printf("connecting to server...\n");
-		io->ping();
-		time(&lastCping);
-
-		int frame = 0;
-		char animation[4] = { "\|/-" };
-		printf("waiting on response of server...\n");
-
-		[&] { // waiting for response
-			while (ping < 0) {
-				while (time() - lastCping < timeOut) {
-
-					if (io->recv() >= 0) {
-						if (recvBuffer[0] == (char)CPING) {
-							//ping = minPing = maxPing = time() - intFromBuf(networkBuffer, 1);
-							ping = minPing = maxPing = time() - getFromBuffer <int> (recvBuffer, 1);
-
-							printf("\b\b\b\nRecvd response in %d miliseconds\n", ping);
-							io->ping();
-							return;
-						}
-					}
-				}
-				printf("Timed out! maybe the packet got lost. trying again...\n");
-				io->ping();
-				time(&lastCping);
-			}
-		}();
-		
-		// ---------------------------------------------------------
-
+		player -> id = io->connect();
+		//connected[player->id] = 1;
+		printf("connected! id: %d\n", (int)player->id);
 	}
 
 
@@ -88,16 +68,21 @@ namespace Tmpl8
 		// networking stuff ----------------------------------------
 
 		if (io->recv() >= 0) { // handeling server recvs
+			int sTime;
+			
+			//printf("Incomming message! cb: %x | %i | %f.1f | \n", (int)recvBuffer[0], getFromBuffer <int>(recvBuffer, 1), getFromBuffer <int>(recvBuffer, 1));
+
 			switch ((int)recvBuffer[0]) {
 			case CPING:
 				// return of the ping!
+				lastCping = currentTime;
+
 				ping = currentTime - lastCping; // currenttime has just been updated, so it seems fair to use it instead of time()
 				if (ping < minPing) { minPing = ping; }
 				if (ping > maxPing) { maxPing = ping; }
 
-				lastCping = currentTime;
 				//printf("PING! (%d)\n", ping);
-				io->ping();
+				//io->ping();
 				break;
 			case SPING:
 				// return the ping!
@@ -107,6 +92,17 @@ namespace Tmpl8
 				break;
 			case SUPDATE:
 				// update internal game state
+				sTime = getFromBuffer <int>(recvBuffer, 1);
+
+				if (sTime > lastSUpdate) { // newer
+					lastSUpdate = sTime;
+					updatePlayerBuffer();
+				}
+
+				break;
+			case SASSIGN:
+				player->id = getFromBuffer <char>(recvBuffer, 2);
+				printf("new id: %i\n", (int)getFromBuffer <char>(recvBuffer, 2)); // nts this gets triggered sometimes seemingly random... wtf?
 				break;
 			default:
 				// this is not supposed to happen
@@ -114,11 +110,6 @@ namespace Tmpl8
 			}
 		}
 
-		if (currentTime - lastCping > timeOut) {
-			printf("cPing timed out, maybe the packet got lost\n");
-			lastCping = currentTime;
-			io->ping();
-		}
 
 		// ---------------------------------------------------------
 
@@ -127,12 +118,17 @@ namespace Tmpl8
 
 		// player stuff --------------------------------------------
 
-		player->move(deltaTime);
-		player->rotateTurret(mouseX, mouseY);
-		player->draw(screen);
+		updatePlayers(deltaTime);
+
 		
+		
+
+		// update server -------------------------------------------
+
 		player->toBuffer(sendBuffer);
+		insertIntoBuffer <int> (&currentTime, sendBuffer, 1);
 		io->send(CUPDATE, sendBuffer, sizeof(sendBuffer));
+
 
 		// debugging stuff -----------------------------------------
 
@@ -141,17 +137,14 @@ namespace Tmpl8
 		//sprintf(str, "fps:%.1f", fps);
 		sprintf(str, "fps:%.1f", fps);
 		screen->Print(str, 3, 3, 0xff0000);
-		sprintf(str, "png: %d %d %d", minPing, ping, maxPing);
+		sprintf(str, " id: %i %i%i%i%i%i%i%i%i", player->id, connected[0], connected[1], connected[2], connected[3], connected[4], connected[5], connected[6], connected[7]);
 		screen->Print(str, 3, 11, 0xffffff);
-
+		
+		//displayBuffers(screen->GetBuffer());
 	}
 
 
-	// -----------------------------------------------------------
-	// exiting
-	// -----------------------------------------------------------
-
-	void Game::Shutdown() { printf("goodbye\n"); }
+	
 
 
 	// -----------------------------------------------------------
@@ -167,37 +160,85 @@ namespace Tmpl8
 		//printf("key pressed: %i\n", key);
 		if (GetAsyncKeyState(Controls::tLeft) || GetAsyncKeyState(Controls::tRight)) player->aimWithMouse = false; // nts ugh
 		if (key == 44) { // spacebar
-			displayBuffer(recvBuffer, networkBufferLength);
-			char msg[6] = "1test";
-			io->send(CUPDATE, msg, sizeof(msg)); // ping the server
+			printf("breakpoint!");
+			//displayBuffer(recvBuffer, networkBufferLength);
+			//displayBuffer(playerBuffer, sizeof(playerBuffer));
 		}
 	}
 	
+	void Game::updatePlayerBuffer() {
+		for (int i = 0; i < 8; i++) { // for every player
+			memcpy(&playerBuffer[2 * TNKSZ * i + playerBufferOffset * TNKSZ], &recvBuffer[6 + TNKSZ * i], TNKSZ);
+			// update connected array
+			INT8 n = (recvBuffer[5] >> i) & 1;
+			if (connected[i] < n) { // n == 1; c[i] == 0; new connection!
+				printf("Player %i joined\n", i);
+				connected[i] = 1;
+				players[i] = new Tank(&playerBuffer[2 * TNKSZ * i]);
+				players[i]->id = (char)i;
+				players[i]->nb = &playerBuffer[2 * TNKSZ * i + playerBufferOffset * TNKSZ];
+				players[i]->ob = &playerBuffer[2 * TNKSZ * i + (1 - playerBufferOffset) * TNKSZ];
+			} else if (connected[i] > n) { // n == 0; c[i] == 1; lost connection!
+				printf("player %i left\n", i);
+				connected[i] = 0;
+				// delete current tank? maybe not???
+			} else if (n) { // player is still connected
+				players[i]->u = true;
+			}
+		}
+		playerBufferOffset = 1 - playerBufferOffset; // flip the value
+		//memcpy(playerBuffer, &recvBuffer[6], sizeof(playerBuffer));
+	}
+	
+	void Game::updatePlayers(float deltaTime) {
+		// update the player ---------------------------------------
+	
+		//players[0]->update(playerBuffer[6]);
+
+		
+		/*players[0]->x = getFromBuffer <float>(recvBuffer, 5);
+		players[0]->y = getFromBuffer <float>(recvBuffer, 9);
+		players[0]->r = getFromBuffer <float>(recvBuffer, 13);*/
+
+		for (int i = 0; i < 8; i++) {
+			if (connected[i]) {
+				players[i]->update();
+				players[i]->draw(screen);
+			}
+		} 
+
+		//players[0]->update();
+
+		player->move(deltaTime);
+		player->rotateTurret(mouseX, mouseY);
+		//player->draw(screen);
+		screen->Plot(player->x, player->y, 0xffffff);
+		
+		
+		//players[0]->draw(screen);
+	}
+
 	// -------------------------------------------------------------
 	// functions
 	// -------------------------------------------------------------
 
+	//void displayBuffers(Pixel* mem) {
+	//	for (int i = 0; i < 0; i++) {
+
+	//	}
+	//}
+
 	void displayBuffer(char* buf, int len) {
 		printf("buffer:\n");
 		for (int i = 0; i < len; i++) {
-			printf("%c",buf[i]);
+			printf("%x",buf[i]);
 		}
 		printf("\n");
 	}
 
-	void time(int *i) {*i = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();}
+	void time( int *i) {*i = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();}
 
-	int time() {return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();}
+	int time() {return (int)std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();}
 
-	/*int intFromBuf(char* buf, int offset) {
-		return *(reinterpret_cast<unsigned int*>(&buf[offset]));
-	}*/
-
-	//void Game::showPing(int x, int y) {
-	//	//int score = 123;
-	//	char text[10];
-	//	//sprintf(text, "Ping: %d", io->ping());
-	//	screen->Print(text, x, y, 0xff0000);
-	//}
 
 };

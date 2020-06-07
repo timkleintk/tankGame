@@ -11,12 +11,73 @@
 // Include the Winsock library (lib) file
 #pragma comment (lib, "ws2_32.lib")
 
+// -----------------------------------------------------------------
+
+/* SPING
+in	sz	description
+0	1	control byte
+1	4	time int
+*/
+
+/* CPING
+in	sz	description
+0	1	control byte
+1	4	time int
+*/
+
+
+/* SUPDATE:
+in	sz	description
+0	1	control byte
+1	4	time int
+5	1	connection map
+6	46	client 0
+52	46	client 1
+96	46	client 2
+142	46	client 3
+188	46	client 4
+234	46	client 5
+282	46	client 6
+328	46	client 7
+*/
+
+/* CUPDATE
+in	sz 	description
+0	1	control byte
+1	4	time int
+5	4	x float
+9	4 	y float
+13	4	r float
+17	4	v float
+21	4	tr float
+25	4	bx float
+29	4 	by float
+33	4	br float
+37	1	id u int
+38	8	name chars
+46	1	color byte
+*/
+
+/* CASSIGN
+in	sz	description
+0	1	control byte
+*/
+
+/* SASSIGN
+in	sz	description
+0	1	control byte
+1	1	id
+*/
+
+// -----------------------------------------------------------------
 
 enum cBytes {
 	SPING = (char)0x00,		// 0 - ping from server
 	CPING = (char)0x01,		// 1 - ping from client
 	SUPDATE = (char)0x02,	// 2 - update from server
-	CUPDATE = (char)0x03	// 3 - update from Client
+	CUPDATE = (char)0x03,	// 3 - update from Client
+	SASSIGN = (char)0x04,	// 4 - recv index from server
+	CASSIGN = (char)0x05	// 4 - ask the server for an id
 };
 
 
@@ -79,6 +140,28 @@ class Connection {
 			//insertIntIntoBuffer(sendTime, msg, 1);
 			insertIntoBuffer <int> (&sendTime, msg, 1);
 			send(CPING, msg, sizeof(msg));
+		}
+
+		char connect() {
+			int sendTime = time();
+			int timeOut = 10000;
+			char msg;
+			//msg[0] = CASSIGN;
+			send(CASSIGN, &msg, 1);
+			while (1) {
+				while (time() - sendTime < timeOut) {
+
+					if (recv() >= 0) {
+						if (buffer[0] == (char)SASSIGN) {
+							//return getFromBuffer<char>(buffer, 1);
+							return buffer[1];
+						}
+					}
+				}
+				printf("Timed out! maybe the packet got lost. trying again...\n");
+				send(CASSIGN, &msg, 1);
+				time(&sendTime);
+			}
 		}
 
 		void sendUpdate(char *msg, int len) {
