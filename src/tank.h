@@ -1,5 +1,4 @@
 #pragma once
-#define TNKSZ 46
 
 namespace Tmpl8 
 {
@@ -11,7 +10,7 @@ class Tank {
 		Tank(char* buffer);
 		~Tank();
 
-		void update();
+		void update(char* updateBuffer);
 		void draw(Surface* screen);
 		void getVerticis(float* arr);
 		void move(float dt);
@@ -25,9 +24,13 @@ class Tank {
 		bool u;
 		char* nb, * ob;
 	private:
-		//char* buf, * nb, * ob;
 		char* buf;
+		int bufferOffset;
+
+		char* stateBuffers[INTERPRATIO];
+
 		float dx, dy, dr, ox, oy, or;
+		int dt;
 
 
 		//int lu;

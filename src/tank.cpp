@@ -1,4 +1,5 @@
 #include <Math.h>
+#include "game.h" // macros
 #include "tank.h"
 #include "surface.h" // Pixel
 #include "Controls.h" // controls
@@ -6,37 +7,37 @@
 #include "windows.h"
 #include <stdio.h>
 
-/*
 
-in	sz 	description
-0	4	time int
-4	4	x float
-8	4 	y float
-12	4	r float
-16	4	v float
-20	4	tr float
-24	4	bx float
-28	4 	by float
-32	4	br float
-36	1	id
-37	8	name chars
-45	1	color byte
-
+/* SUPDATE:
+in	sz	description
+0	1	control byte
+1	4	time int
+5	47	client 0
+52	47	client 1
+99	47	client 2
+146	47	client 3
+193	47	client 4
+240	47	client 5
+287	47	client 6
+334	47	client 7
 */
 
-#define TIMEOFFSET 0
-#define XOFFSET 4
-#define YOFFSET 8
-#define ROFFSET 12
-#define VOFFSET 16
-#define TROFFSET 20
-#define BXOFFSET 24
-#define BYOFFSET 28
-#define BROFFSET 32
-#define IDOFFSET 36
-#define NAMEOFFSET 37
-#define COFFSET 45
-
+/* CUPDATE
+in	sz 	description
+0	1	control byte
+1	4	time int
+5	4	x float
+9	4 	y float
+13	4	r float
+17	4	v float
+21	4	tr float
+25	4	bx float
+29	4 	by float
+33	4	br float
+37	1	id u int
+38	8	name chars
+46	1	color byte
+*/
 
 namespace Tmpl8
 {
@@ -52,12 +53,20 @@ namespace Tmpl8
 	int turretOffset = 3; // px
 	float turretRotationSpeed = 0.1f; // rad s-1
 
-	float maxV = 300.0f; // px s-1
+	float maxV = 200.0f; // px s-1
+	float correctionV = 300.0f; // px s-1
 
 
 	Tank::Tank(char* buffer) {
 		
 		buf = buffer;
+		
+		bufferOffset = 0; // the newest place
+		//stateBuffers = new char*[INTERPRATIO];
+		for (int i = 0; i < INTERPRATIO; i++) {
+			stateBuffers[i] = &buf[i * TNKSZ];
+		}
+
 		nb = buffer; // new buffer
 		ob = buffer + TNKSZ; // old buffer
 		ox = x = getFromBuffer <float>(ob, XOFFSET);
@@ -73,64 +82,119 @@ namespace Tmpl8
 		//lu = getFromBuffer <float>(buf, TIMEOFFSET);
 		//name = "timklein";
 
+		time(&lu);
+
+		//insertIntoBuffer <int>(&t, stateBuffers[0], TIMEOFFSET); // nts ugly
+
 		newTime = getFromBuffer <int>(nb, TIMEOFFSET);
 		oldTime = getFromBuffer <int>(ob, TIMEOFFSET);
 	}
 
 	Tank::~Tank() {
 	}
-
-	void Tank::update() {
+	
+	void Tank::update(char* updateBuffer) {
 
 		if (u) {
+
+			int nu = getFromBuffer <int>(updateBuffer, TIMEOFFSET);
+
+			printf("lu: %i, nu: %i \n", lu, nu);
+
+
+			if (nu > lu) { // insert into buffer
+				lu = nu;
+				for (int i = INTERPRATIO - 1; i > 0; i--) { // loop backwards through stateBuffers
+					stateBuffers[i] = stateBuffers[i - 1]; // shift them all one to the right.
+				}
+				bufferOffset = (bufferOffset + 1) % INTERPRATIO; // change newest to the next
+				stateBuffers[0] = &buf[TNKSZ * bufferOffset]; // point to newest stateBuffer
+				memcpy(stateBuffers[0], &updateBuffer[SUPDATEHEADER], TNKSZ); // fill stateBuffer with the newest data
+			}
+
 			// swap old and new
-
-
-
-			char* temp = ob;
+			/*char* temp = ob;
 			ob = nb;
 			nb = temp;
 
-			time(&lu);
 			newTime = getFromBuffer <int>(nb, TIMEOFFSET);
-			oldTime = getFromBuffer <int>(ob, TIMEOFFSET);
+			oldTime = getFromBuffer <int>(ob, TIMEOFFSET);*/
 
-			printf("ot: %i, nt: %i, lu: %i, ct: %i\n", newTime, oldTime, lu, time());
+			/*if (oldTime < newTime) {
+				time(&lu);
 
-			ox = getFromBuffer <float>(ob, XOFFSET);
-			oy = getFromBuffer <float>(ob, YOFFSET);
-			or = getFromBuffer <float>(ob, ROFFSET);
+				dt = newTime - oldTime;
 
-			dx = getFromBuffer <float>(nb, XOFFSET) - ox;
-			dy = getFromBuffer <float>(nb, YOFFSET) - oy;
-			dr = getFromBuffer <float>(nb, ROFFSET) - or;
-			u = false;
+				ox = getFromBuffer <float>(ob, XOFFSET);
+				oy = getFromBuffer <float>(ob, YOFFSET);
+				or = getFromBuffer <float>(ob, ROFFSET);
+
+				dx = getFromBuffer <float>(nb, XOFFSET) - ox;
+				dy = getFromBuffer <float>(nb, YOFFSET) - oy;
+				dr = getFromBuffer <float>(nb, ROFFSET) - or;
+			}*/
+			u = false; // update has been done
 		}
 
-		float progress = (float)(time() - lu) / (float)(newTime - oldTime);
-		x = ox + progress * dx;
-		y = oy + progress * dy;
-		r = or + progress * dr;
+		//float progress = (float)(time() - lu) / (float)(dt);
+		//int timePassed = time() - lu;
+
+		////printf("progress: %i%%\n", (int)(progress * 100));
+		////x = ox + progress * dx;
+		//float nx = ox + dx / dt * timePassed;
+		//float dx2 = nx - x;
+
+		////y = oy + progress * dy;
+		//float ny = oy + dy / dt * timePassed;
+		//float dy2 = ny - y;
+
+
+		////r = or + progress * dr;
+		//r = or + dr / dt * timePassed;
+
+		//float dist = sqrtf(powf(nx - x, 2) + powf(ny - y, 2));
+		////printf("dist: %.1f\n", dist);
+		//x = nx;
+		//y = ny;
+
+		x = getFromBuffer <float>(stateBuffers[0], XOFFSET);
+		y = getFromBuffer <float>(stateBuffers[0], YOFFSET);
+		r = getFromBuffer <float>(stateBuffers[0], ROFFSET);
+		v = getFromBuffer <float>(stateBuffers[0], VOFFSET);
+		tr = getFromBuffer <float>(stateBuffers[0], TROFFSET);
+		//bx = getFromBuffer <float>(stateBuffers[0], YOFFSET);
+		//by = getFromBuffer <float>(stateBuffers[0], YOFFSET);
+
+
 		
 	}
 
 	void Tank::draw(Surface* screen) {
 		//screen->Plot(x, y, 0xff00ff); // center
-		screen->Plot((int)getFromBuffer <float>(ob, XOFFSET), (int)getFromBuffer <float>(ob, YOFFSET), 0xff0000);
-		screen->Plot((int)getFromBuffer <float>(nb, XOFFSET), (int)getFromBuffer <float>(nb, YOFFSET), 0x00ff00);
-		// body
-		float vx[8];
-		this->getVerticis(vx);
-		screen->Line(vx[6], vx[7], vx[0], vx[1], 0xffffff);
-		for (int i = 0; i < 3; i++) {
-			screen->Line(vx[2*i], vx[2*i+1], vx[2*i+2], vx[2*i+3], 0xffffff); 
+
+		for (int i = 0; i < INTERPRATIO; i++) {
+			screen->Plot(
+				(int)getFromBuffer <float>(stateBuffers[i], XOFFSET), 
+				(int)getFromBuffer <float>(stateBuffers[i], YOFFSET), 
+				0xff0000);
+
 		}
-		
-		// turret
-		screen->Line(
-			x + cosf(r) * turretOffset, y + sinf(r) * turretOffset, // base
-			x + cosf(r) * turretOffset + cosf(tr) * turretLength, y + sinf(r) * turretOffset + sinf(tr) * turretLength, // tip
-			0xff0000);
+
+		//screen->Plot((int)getFromBuffer <float>(nb, XOFFSET), (int)getFromBuffer <float>(nb, YOFFSET), 0x00ff00);
+		// body
+
+		//float vx[8];
+		//this->getVerticis(vx);
+		//screen->Line(vx[6], vx[7], vx[0], vx[1], 0xffffff);
+		//for (int i = 0; i < 3; i++) {
+		//	screen->Line(vx[2*i], vx[2*i+1], vx[2*i+2], vx[2*i+3], 0xffffff); 
+		//}
+		//
+		//// turret
+		//screen->Line(
+		//	x + cosf(r) * turretOffset, y + sinf(r) * turretOffset, // base
+		//	x + cosf(r) * turretOffset + cosf(tr) * turretLength, y + sinf(r) * turretOffset + sinf(tr) * turretLength, // tip
+		//	0xff0000);
 		
 
 	}

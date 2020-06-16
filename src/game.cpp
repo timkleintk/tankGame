@@ -12,6 +12,12 @@
 #include "tank.h"
 #include "functions.h"
 
+// -----------------------------------------------------------------
+
+// notes go here
+
+// -----------------------------------------------------------------
+
 namespace Tmpl8
 {
 	
@@ -20,8 +26,8 @@ namespace Tmpl8
 	// -------------------------------------------------------------
 	
 	Player* player;
-	Tank* players[8];
-	INT8 connected[8] = { 0,0,0,0,0,0,0,0 }; // nts look at type
+	Tank* players[PLAYERS];
+	bool connected[PLAYERS]; // nts look at type
 
 	float life = 0.0f;
 	int currentTime;
@@ -32,7 +38,7 @@ namespace Tmpl8
 	int timeOut = 3000;
 	float fps;
 	
-	int playerBufferOffset = 0; // nts bad name -_-
+	//int playerBufferOffset = 0; // nts bad name -_-
 
 	// -------------------------------------------------------------
 	// Game init
@@ -44,14 +50,15 @@ namespace Tmpl8
 		//player = new Player(&playerBuffer[0]);	
 		player = new Player(playerBuffer);
 		//players[0] = new Tank(playerBuffer);
-		networkBufferLength = 1024;
+		//networkBufferLength = 1024;
 		io = new Connection((PCSTR)"212.182.134.29", 8009, recvBuffer, sizeof(recvBuffer));
+		//io = new Connection((PCSTR)"192.168.2.18", 8009, recvBuffer, sizeof(recvBuffer));
 		time(&lastSUpdate); // for if currentTime < 0;
 
 
 		// establishing connection to the server -------------------
 		printf("connecting to server...\n");
-		player -> id = io->connect();
+		player->id = io->connect();
 		//connected[player->id] = 1;
 		printf("connected! id: %d\n", (int)player->id);
 	}
@@ -92,13 +99,13 @@ namespace Tmpl8
 				break;
 			case SUPDATE:
 				// update internal game state
-				sTime = getFromBuffer <int>(recvBuffer, 1);
+				sTime = getFromBuffer <int>(recvBuffer, TIMEOFFSET);
 
 				if (sTime > lastSUpdate) { // newer
 					lastSUpdate = sTime;
 					updatePlayerBuffer();
 				}
-
+				
 				break;
 			case SASSIGN:
 				player->id = getFromBuffer <char>(recvBuffer, 2);
@@ -167,26 +174,27 @@ namespace Tmpl8
 	}
 	
 	void Game::updatePlayerBuffer() {
-		for (int i = 0; i < 8; i++) { // for every player
-			memcpy(&playerBuffer[2 * TNKSZ * i + playerBufferOffset * TNKSZ], &recvBuffer[6 + TNKSZ * i], TNKSZ);
+		memcpy(updateBuffer, recvBuffer, sizeof(updateBuffer));
+
+		for (int i = 0; i < PLAYERS; i++) { // for every player
 			// update connected array
-			INT8 n = (recvBuffer[5] >> i) & 1;
+			bool n = getFromBuffer <INT8>(recvBuffer, SUPDATEHEADER + i * TNKSZ) > 0; // if controll byte is not null
 			if (connected[i] < n) { // n == 1; c[i] == 0; new connection!
 				printf("Player %i joined\n", i);
-				connected[i] = 1;
-				players[i] = new Tank(&playerBuffer[2 * TNKSZ * i]);
-				players[i]->id = (char)i;
-				players[i]->nb = &playerBuffer[2 * TNKSZ * i + playerBufferOffset * TNKSZ];
-				players[i]->ob = &playerBuffer[2 * TNKSZ * i + (1 - playerBufferOffset) * TNKSZ];
+				connected[i] = true;
+				players[i] = new Tank(&playerBuffer[INTERPRATIO * TNKSZ * i]); // a little space in memory for the tank to be happy in
+				players[i]->id = (char)i; // make sure the tank understands its place
+				//players[i]->nb = &playerBuffer[INTERPRATIO * TNKSZ * i + playerBufferOffset * TNKSZ];
+				//players[i]->ob = &playerBuffer[INTERPRATIO * TNKSZ * i + (playerBufferOffset + 1) % INTERPRATIO * TNKSZ];
 			} else if (connected[i] > n) { // n == 0; c[i] == 1; lost connection!
 				printf("player %i left\n", i);
-				connected[i] = 0;
+				connected[i] = false;
 				// delete current tank? maybe not???
 			} else if (n) { // player is still connected
 				players[i]->u = true;
 			}
 		}
-		playerBufferOffset = 1 - playerBufferOffset; // flip the value
+		//playerBufferOffset = 1 - playerBufferOffset; // flip the value
 		//memcpy(playerBuffer, &recvBuffer[6], sizeof(playerBuffer));
 	}
 	
@@ -202,7 +210,7 @@ namespace Tmpl8
 
 		for (int i = 0; i < 8; i++) {
 			if (connected[i]) {
-				players[i]->update();
+				players[i]->update(updateBuffer);
 				players[i]->draw(screen);
 			}
 		} 

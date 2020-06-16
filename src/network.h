@@ -30,15 +30,14 @@ in	sz	description
 in	sz	description
 0	1	control byte
 1	4	time int
-5	1	connection map
-6	46	client 0
-52	46	client 1
-96	46	client 2
-142	46	client 3
-188	46	client 4
-234	46	client 5
-282	46	client 6
-328	46	client 7
+5	47	client 0
+52	47	client 1
+99	47	client 2
+146	47	client 3
+193	47	client 4
+240	47	client 5
+287	47	client 6
+334	47	client 7
 */
 
 /* CUPDATE

@@ -1,5 +1,26 @@
 #pragma once
-#define TNKSZ 46
+
+#define PLAYERS 8
+#define INTERPRATIO 2
+
+
+#define TNKSZ 47
+
+#define SUPDATEHEADER 5
+
+#define TIMEOFFSET 1
+#define XOFFSET 5
+#define YOFFSET 9
+#define ROFFSET 13
+#define VOFFSET 17
+#define TROFFSET 21
+#define BXOFFSET 25
+#define BYOFFSET 29
+#define BROFFSET 33
+#define IDOFFSET 37
+#define NAMEOFFSET 38
+#define COFFSET 46
+
 
 namespace Tmpl8 {
 
@@ -24,7 +45,8 @@ class Game {
 		Connection* io;
 		char recvBuffer[1024];
 		char sendBuffer[47]; // nts parameterize this
-		char playerBuffer[ 2 * 8 * TNKSZ]; // nts parameterize this
+		char updateBuffer[PLAYERS * TNKSZ + SUPDATEHEADER];
+		char playerBuffer[INTERPRATIO * PLAYERS * TNKSZ]; // nts parameterize this
 
 		int mouseX, mouseY, networkBufferLength; // nbl kan weg
 		//void showPing(int x, int y);

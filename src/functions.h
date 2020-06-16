@@ -19,3 +19,23 @@ type getFromBuffer(char* buf, int offset) {
 void time( int* i);  int time();
 
 }
+
+//int cap(int x, int min, int max) {
+//	if (x < min) {
+//		return min;
+//	} else if (x > max) {
+//		return max;
+//	} else {
+//		return x;
+//	}
+//}
+//
+//float capf(float x, float min, float max) {
+//	if (x < min) {
+//		return min;
+//	} else if (x > max) {
+//		return max;
+//	} else {
+//		return x;
+//	}
+//}
