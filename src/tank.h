@@ -7,35 +7,42 @@ class Surface;
 
 class Tank {
 	public:
-		Tank(char* buffer);
+		Tank(char* buffer, char* updateBuffer);
 		~Tank();
 
-		void update(char* updateBuffer);
+		void update(float deltaTime);
 		void draw(Surface* screen);
 		void getVerticis(float* arr);
-		void move(float dt);
 		void rotateTurret(float nr);
 		void fromBuffer(char* buf);
 
-		int w, h, newTime, oldTime, lu;
 		char id;
+		bool u;
 		char name[9] = "timklein";
 		float x, y, r, tr, v;
-		bool u;
-		char* nb, * ob;
 	private:
-		char* buf;
-		int bufferOffset;
+		int w, h;
 
+		int c;
+
+		float ox, nx, dx;
+		float oy, ny, dy;
+		int	  ou, nu;
+		int   ot, nt, dt;
+
+
+		bool extrapolating;
+		float ov, nv, dv, dvdt;
+		float or, nr, dr, drdt;
+		float otr, ntr, dtr;
+
+
+		int timings[INTERPRATIO];
+		char* buf;
+		int bufferOffset, latency;
+		char* updateBuffer;
 		char* stateBuffers[INTERPRATIO];
 
-		float dx, dy, dr, ox, oy, or;
-		int dt;
-
-
-		//int lu;
-		//float lx, ly, lr, lv;
-		//float dr, dv;
 };
 
 class Player : public Tank {
@@ -43,7 +50,8 @@ class Player : public Tank {
 		Player(char* buffer);
 		void rotateTurret(int mx, int my);
 		void toBuffer(char* buf);
-		
+		void move(float dt);
+		void fire() {}
 		bool aimWithMouse = true;
 
 	//private:

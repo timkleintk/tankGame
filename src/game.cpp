@@ -133,7 +133,7 @@ namespace Tmpl8
 		// update server -------------------------------------------
 
 		player->toBuffer(sendBuffer);
-		insertIntoBuffer <int> (&currentTime, sendBuffer, 1);
+		insertIntoBuffer <int> (&currentTime, sendBuffer, TIMEOFFSET);
 		io->send(CUPDATE, sendBuffer, sizeof(sendBuffer));
 
 
@@ -167,7 +167,7 @@ namespace Tmpl8
 		//printf("key pressed: %i\n", key);
 		if (GetAsyncKeyState(Controls::tLeft) || GetAsyncKeyState(Controls::tRight)) player->aimWithMouse = false; // nts ugh
 		if (key == 44) { // spacebar
-			printf("breakpoint!");
+			player->fire();
 			//displayBuffer(recvBuffer, networkBufferLength);
 			//displayBuffer(playerBuffer, sizeof(playerBuffer));
 		}
@@ -182,7 +182,9 @@ namespace Tmpl8
 			if (connected[i] < n) { // n == 1; c[i] == 0; new connection!
 				printf("Player %i joined\n", i);
 				connected[i] = true;
-				players[i] = new Tank(&playerBuffer[INTERPRATIO * TNKSZ * i]); // a little space in memory for the tank to be happy in
+				players[i] = new Tank(
+					&playerBuffer[INTERPRATIO * TNKSZ * i], 
+					&updateBuffer[SUPDATEHEADER + i * TNKSZ]); 
 				players[i]->id = (char)i; // make sure the tank understands its place
 				//players[i]->nb = &playerBuffer[INTERPRATIO * TNKSZ * i + playerBufferOffset * TNKSZ];
 				//players[i]->ob = &playerBuffer[INTERPRATIO * TNKSZ * i + (playerBufferOffset + 1) % INTERPRATIO * TNKSZ];
@@ -210,7 +212,7 @@ namespace Tmpl8
 
 		for (int i = 0; i < 8; i++) {
 			if (connected[i]) {
-				players[i]->update(updateBuffer);
+				players[i]->update(deltaTime);
 				players[i]->draw(screen);
 			}
 		} 
@@ -219,8 +221,8 @@ namespace Tmpl8
 
 		player->move(deltaTime);
 		player->rotateTurret(mouseX, mouseY);
-		//player->draw(screen);
-		screen->Plot(player->x, player->y, 0xffffff);
+		player->draw(screen);
+		//screen->Plot(player->x, player->y, 0xffffff);
 		
 		
 		//players[0]->draw(screen);

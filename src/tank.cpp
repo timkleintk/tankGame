@@ -42,6 +42,7 @@ in	sz 	description
 namespace Tmpl8
 {
 
+
 	float rotationSpeed = 5.0f; // rad s-1
 	float acceleration = 100.0f; // px s-2
 
@@ -56,117 +57,178 @@ namespace Tmpl8
 	float maxV = 200.0f; // px s-1
 	float correctionV = 300.0f; // px s-1
 
+	int lag = 300; // ms
 
-	Tank::Tank(char* buffer) {
+	Tank::Tank(char* buf, char* updateBuffer) {
 		
-		buf = buffer;
-		
+		this->buf = buf;
+		this->updateBuffer = updateBuffer;
+
 		bufferOffset = 0; // the newest place
 		//stateBuffers = new char*[INTERPRATIO];
 		for (int i = 0; i < INTERPRATIO; i++) {
 			stateBuffers[i] = &buf[i * TNKSZ];
 		}
 
-		nb = buffer; // new buffer
-		ob = buffer + TNKSZ; // old buffer
-		ox = x = getFromBuffer <float>(ob, XOFFSET);
-		oy = y = getFromBuffer <float>(ob, YOFFSET);
-		or = r = getFromBuffer <float>(ob, ROFFSET);
-
 		w = tankLength;
 		h = tankWidth;
 		
 		id = (char)-1;
 
+		c = 0x000000;
+
 		u = false;
-		//lu = getFromBuffer <float>(buf, TIMEOFFSET);
+		//ou = getFromBuffer <float>(buf, TIMEOFFSET);
 		//name = "timklein";
 
-		time(&lu);
+		time(&ou);
 
 		//insertIntoBuffer <int>(&t, stateBuffers[0], TIMEOFFSET); // nts ugly
 
-		newTime = getFromBuffer <int>(nb, TIMEOFFSET);
-		oldTime = getFromBuffer <int>(ob, TIMEOFFSET);
+		//newTime = getFromBuffer <int>(nb, TIMEOFFSET);
+		//oldTime = getFromBuffer <int>(ob, TIMEOFFSET);
 	}
 
 	Tank::~Tank() {
 	}
 	
-	void Tank::update(char* updateBuffer) {
+	void Tank::update(float deltaTime) {
 
 		if (u) {
+			nu = getFromBuffer <int>(updateBuffer, TIMEOFFSET); // new update time
 
-			int nu = getFromBuffer <int>(updateBuffer, TIMEOFFSET);
-
-			printf("lu: %i, nu: %i \n", lu, nu);
-
-
-			if (nu > lu) { // insert into buffer
-				lu = nu;
+			if (nu > ou) { // if update is newer then the most recent known update
+				ou = nu; // old update is the new update
 				for (int i = INTERPRATIO - 1; i > 0; i--) { // loop backwards through stateBuffers
 					stateBuffers[i] = stateBuffers[i - 1]; // shift them all one to the right.
+					timings[i] = timings[i - 1];
 				}
 				bufferOffset = (bufferOffset + 1) % INTERPRATIO; // change newest to the next
 				stateBuffers[0] = &buf[TNKSZ * bufferOffset]; // point to newest stateBuffer
-				memcpy(stateBuffers[0], &updateBuffer[SUPDATEHEADER], TNKSZ); // fill stateBuffer with the newest data
+				timings[0] = nu;
+				memcpy(stateBuffers[0], updateBuffer, TNKSZ); // fill stateBuffer with the newest data
 			}
 
-			// swap old and new
-			/*char* temp = ob;
-			ob = nb;
-			nb = temp;
-
-			newTime = getFromBuffer <int>(nb, TIMEOFFSET);
-			oldTime = getFromBuffer <int>(ob, TIMEOFFSET);*/
-
-			/*if (oldTime < newTime) {
-				time(&lu);
-
-				dt = newTime - oldTime;
-
-				ox = getFromBuffer <float>(ob, XOFFSET);
-				oy = getFromBuffer <float>(ob, YOFFSET);
-				or = getFromBuffer <float>(ob, ROFFSET);
-
-				dx = getFromBuffer <float>(nb, XOFFSET) - ox;
-				dy = getFromBuffer <float>(nb, YOFFSET) - oy;
-				dr = getFromBuffer <float>(nb, ROFFSET) - or;
-			}*/
 			u = false; // update has been done
 		}
 
-		//float progress = (float)(time() - lu) / (float)(dt);
-		//int timePassed = time() - lu;
+		int now = time() - lag;
 
-		////printf("progress: %i%%\n", (int)(progress * 100));
-		////x = ox + progress * dx;
-		//float nx = ox + dx / dt * timePassed;
-		//float dx2 = nx - x;
+		for (int i = 0; i < INTERPRATIO; i++) {
 
-		////y = oy + progress * dy;
-		//float ny = oy + dy / dt * timePassed;
-		//float dy2 = ny - y;
+			if (i == INTERPRATIO - 1) {
+				// extrapolate
+				printf("Xtrapol8\n");
+				break;
+			}
+
+			
+
+			if (timings[i] >= now && timings[i + 1] <= now) {
+
+				ot = timings[i + 1];
+				nt = timings[i];
+				dt = nt - ot;
+
+				ox = x;
+				ox = getFromBuffer <float>(stateBuffers[i + 1], XOFFSET);
+				nx = getFromBuffer <float>(stateBuffers[i], XOFFSET);
+				dx = nx - ox;
+
+				oy = y;
+				oy = getFromBuffer <float>(stateBuffers[i + 1], YOFFSET);
+				ny = getFromBuffer <float>(stateBuffers[i], YOFFSET);
+				dy = ny - oy;
+
+				or = r;
+				or = getFromBuffer <float>(stateBuffers[i + 1], ROFFSET);
+				nr = getFromBuffer <float>(stateBuffers[i], ROFFSET);
+				dr = nr - or ;
+				drdt = dr / (float)dt;
+
+				ov = getFromBuffer<float>(stateBuffers[i + 1], VOFFSET);
+				nv = getFromBuffer<float>(stateBuffers[i], VOFFSET);
+				dv = nv - ov;
+				dvdt = dv / (float)dt;
+
+				otr = getFromBuffer<float>(stateBuffers[i + 1], TROFFSET);
+				ntr = getFromBuffer<float>(stateBuffers[i], TROFFSET);
+				dtr = ntr - otr;
 
 
-		////r = or + progress * dr;
-		//r = or + dr / dt * timePassed;
 
-		//float dist = sqrtf(powf(nx - x, 2) + powf(ny - y, 2));
-		////printf("dist: %.1f\n", dist);
-		//x = nx;
-		//y = ny;
+				break;
+			}
+		}
 
-		x = getFromBuffer <float>(stateBuffers[0], XOFFSET);
-		y = getFromBuffer <float>(stateBuffers[0], YOFFSET);
-		r = getFromBuffer <float>(stateBuffers[0], ROFFSET);
-		v = getFromBuffer <float>(stateBuffers[0], VOFFSET);
-		tr = getFromBuffer <float>(stateBuffers[0], TROFFSET);
+
+		// nts make dependant on interpratio!
+		//int now = time() - lag
+		/*if (now < timings[1]) {
+			printf("time travel\n");
+		} else if (now > timings[0]) { // extrapolating
+			//printf("extrapolate\n");
+			if (!extrapolating) { // start extrapolating
+				or = getFromBuffer<float>(stateBuffers[1], ROFFSET);
+				nr = getFromBuffer<float>(stateBuffers[0], ROFFSET);
+				dr = nr - or;
+				drdt = dr / (float)dt;
+				
+				ov = getFromBuffer<float>(stateBuffers[1], VOFFSET);
+				nv = getFromBuffer<float>(stateBuffers[0], VOFFSET);
+				dv = nv - ov;
+				dvdt = dv / (float)dt;
+
+				v = nv;
+				r = nr;
+
+				extrapolating = true;
+				c = 0xffff00;
+			}
+
+			v += dvdt * deltaTime;
+			r += drdt * deltaTime;
+
+			x += cosf(r) * v * deltaTime / 1000; // v is in px s-2, deltaTime in ms
+			y += sinf(r) * v * deltaTime / 1000;
+			
+
+
+		} else { // interpolate
+			extrapolating = false; */
+			//printf("interpolate\n");
+		float progress = (float)(now - ot) / (float)dt;
+		//printf("progress: %f\n", progress);
+		if (progress > 1) { // Xtrapolating
+			printf("ot: %i, now: %i, nt: %i\n", ot - ot, now - ot, nt - ot);
+			c = 0x00ff00;
+			v += dvdt * deltaTime;
+			r += drdt * deltaTime;
+
+			x += cosf(r) * v * deltaTime / 1000; // v is in px s-2, deltaTime in ms
+			y += sinf(r) * v * deltaTime / 1000;
+		} else { // interpolating
+			c = 0xffffff;
+			x = ox + dx * progress;
+			y = oy + dy * progress;
+			r = or + dr * progress;
+			tr = otr + dtr * progress;
+
+		}
+		//}
+		
+		
+
+		//x = getFromBuffer <float>(stateBuffers[0], XOFFSET);
+		//y = getFromBuffer <float>(stateBuffers[0], YOFFSET);
+		//r = getFromBuffer <float>(stateBuffers[0], ROFFSET);
+		//v = getFromBuffer <float>(stateBuffers[0], VOFFSET);
+		//tr = getFromBuffer <float>(stateBuffers[0], TROFFSET);
 		//bx = getFromBuffer <float>(stateBuffers[0], YOFFSET);
 		//by = getFromBuffer <float>(stateBuffers[0], YOFFSET);
 
-
 		
+			
 	}
 
 	void Tank::draw(Surface* screen) {
@@ -177,24 +239,29 @@ namespace Tmpl8
 				(int)getFromBuffer <float>(stateBuffers[i], XOFFSET), 
 				(int)getFromBuffer <float>(stateBuffers[i], YOFFSET), 
 				0xff0000);
-
 		}
+
+		screen->Plot(
+			(int)x,
+			(int)y,
+			c
+		);
 
 		//screen->Plot((int)getFromBuffer <float>(nb, XOFFSET), (int)getFromBuffer <float>(nb, YOFFSET), 0x00ff00);
 		// body
 
-		//float vx[8];
-		//this->getVerticis(vx);
-		//screen->Line(vx[6], vx[7], vx[0], vx[1], 0xffffff);
-		//for (int i = 0; i < 3; i++) {
-		//	screen->Line(vx[2*i], vx[2*i+1], vx[2*i+2], vx[2*i+3], 0xffffff); 
-		//}
-		//
-		//// turret
-		//screen->Line(
-		//	x + cosf(r) * turretOffset, y + sinf(r) * turretOffset, // base
-		//	x + cosf(r) * turretOffset + cosf(tr) * turretLength, y + sinf(r) * turretOffset + sinf(tr) * turretLength, // tip
-		//	0xff0000);
+		float vx[8];
+		this->getVerticis(vx);
+		screen->Line(vx[6], vx[7], vx[0], vx[1], 0xffffff);
+		for (int i = 0; i < 3; i++) {
+			screen->Line(vx[2*i], vx[2*i+1], vx[2*i+2], vx[2*i+3], 0xffffff); 
+		}
+		
+		// turret
+		screen->Line(
+			x + cosf(r) * turretOffset, y + sinf(r) * turretOffset, // base
+			x + cosf(r) * turretOffset + cosf(tr) * turretLength, y + sinf(r) * turretOffset + sinf(tr) * turretLength, // tip
+			0xff0000);
 		
 
 	}
@@ -212,7 +279,7 @@ namespace Tmpl8
 		
 	 }
 
-	void Tank::move(float deltaTime) {
+	void Player::move(float deltaTime) {
 		float dt =  deltaTime / 1000; // in seconds
 		// get button inputs
 		if (GetAsyncKeyState(Controls::tRight)) tr += turretRotationSpeed * dt;
@@ -233,6 +300,18 @@ namespace Tmpl8
 		// update position
 		x += cosf(r) * v * dt;
 		y += sinf(r) * v * dt;
+
+		// collision
+		if (x < 0) {
+			x = 0;
+		} else if (x > 800) {
+			x = 800;
+		}
+		if (y < 0) {
+			y = 0;
+		} else if (y > 500) {
+			y = 500;
+		}
 	}					
 
 	/*void Tank::rotateTurret(int mx, int my) {
@@ -252,7 +331,7 @@ namespace Tmpl8
 
 	// -------------------------------------------------------------
 
-	Player::Player(char* buffer): Tank(buffer) {
+	Player::Player(char* buffer): Tank(buffer, buffer) { // nts make enemy class
 		// wejoo gekke constructor structure
 	}
 
@@ -261,13 +340,13 @@ namespace Tmpl8
 	}
 
 	void Player::toBuffer(char* buf) {
-		insertIntoBuffer <float> (&x, buf, 5);
-		insertIntoBuffer <float> (&y, buf, 9);
-		insertIntoBuffer <float> (&r, buf, 13);
-		insertIntoBuffer <float> (&v, buf, 17);
-		insertIntoBuffer <float> (&tr, buf, 21);
-		insertIntoBuffer <char> (&id, buf, 37);
-		insertIntoBuffer <char[9]> (&name, buf, 38); // nts inelegant?
+		insertIntoBuffer <float> (&x, buf, XOFFSET);
+		insertIntoBuffer <float> (&y, buf, YOFFSET);
+		insertIntoBuffer <float> (&r, buf, ROFFSET);
+		insertIntoBuffer <float> (&v, buf, VOFFSET);
+		insertIntoBuffer <float> (&tr, buf, TROFFSET);
+		insertIntoBuffer <char> (&id, buf, IDOFFSET);
+		insertIntoBuffer <char[9]> (&name, buf, NAMEOFFSET); // nts inelegant?
 	}
 
 						  

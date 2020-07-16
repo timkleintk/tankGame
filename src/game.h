@@ -1,12 +1,13 @@
 #pragma once
 
 #define PLAYERS 8
-#define INTERPRATIO 2
+#define INTERPRATIO 4
 
 
 #define TNKSZ 47
 
 #define SUPDATEHEADER 5
+#define CUPDATEHEADER 5
 
 #define TIMEOFFSET 1
 #define XOFFSET 5
@@ -44,9 +45,9 @@ class Game {
 		Surface* screen;
 		Connection* io;
 		char recvBuffer[1024];
-		char sendBuffer[47]; // nts parameterize this
+		char sendBuffer[TNKSZ];
 		char updateBuffer[PLAYERS * TNKSZ + SUPDATEHEADER];
-		char playerBuffer[INTERPRATIO * PLAYERS * TNKSZ]; // nts parameterize this
+		char playerBuffer[INTERPRATIO * PLAYERS * TNKSZ]; 
 
 		int mouseX, mouseY, networkBufferLength; // nbl kan weg
 		//void showPing(int x, int y);
