@@ -202,6 +202,7 @@ namespace Tmpl8
 	
 	void Game::updatePlayers(float deltaTime) {
 		// update the player ---------------------------------------
+		player->c = 0xffffff; // nts remove this
 	
 		//players[0]->update(playerBuffer[6]);
 
@@ -210,9 +211,23 @@ namespace Tmpl8
 		players[0]->y = getFromBuffer <float>(recvBuffer, 9);
 		players[0]->r = getFromBuffer <float>(recvBuffer, 13);*/
 
-		for (int i = 0; i < 8; i++) {
+		for (int i = 0; i < PLAYERS; i++) {
+			//if (connected[i] && i != (int) player->id) {
 			if (connected[i]) {
 				players[i]->update(deltaTime);
+				for (int o = 0; o < PLAYERS; o++) {
+					if (connected[o]) {
+						if (players[o]->BULLET) {
+							if (sqrt(powf(players[o]->bx - players[i]->x, 2) + powf(players[o]->by - players[i]->y, 2)) < 50) {
+								players[i]->c = 0xff0000;
+								if (i == (int)player->id) {
+									player->c = 0xff0000;
+								}
+								printf("hit");
+							}
+						}
+					}
+				}
 				players[i]->draw(screen);
 			}
 		} 

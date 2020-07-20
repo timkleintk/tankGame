@@ -20,22 +20,26 @@ class Tank {
 		bool u;
 		char name[9] = "timklein";
 		float x, y, r, tr, v;
+		
+		bool BULLET;
+		float bx, by, br;
+
+		int c;
+
 	private:
 		int w, h;
 
-		int c;
 
 		float ox, nx, dx;
 		float oy, ny, dy;
 		int	  ou, nu;
 		int   ot, nt, dt;
-
+		float obx, oby;
 
 		bool extrapolating;
 		float ov, nv, dv, dvdt;
 		float or, nr, dr, drdt;
 		float otr, ntr, dtr;
-
 
 		int timings[INTERPRATIO];
 		char* buf;
@@ -51,7 +55,8 @@ class Player : public Tank {
 		void rotateTurret(int mx, int my);
 		void toBuffer(char* buf);
 		void move(float dt);
-		void fire() {}
+		void fire();
+		void destroyBullet();
 		bool aimWithMouse = true;
 
 	//private:
